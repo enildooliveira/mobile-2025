@@ -1,93 +1,67 @@
 import 'package:flutter/material.dart';
-import 'package:mobile_2025/home_page.dart';
-import 'package:mobile_2025/login_page.dart';
-import 'package:mobile_2025/perfil_page.dart';
+import 'package:mobile_2025/telas/modulo_1_tela.dart';
+import 'package:mobile_2025/telas/modulo_2_tela.dart';
+import 'package:mobile_2025/telas/modulo_3_tela.dart';
 
 void main() {
-  runApp(const MyApp());
+  runApp(const MeuApp());
 }
 
-/// Serviço de autenticação MUITO simples (memória)
-class AuthService extends ChangeNotifier {
-  bool _logged = false;
-  bool get logged => _logged;
-
-  void login() {
-    _logged = true;
-    notifyListeners();
-  }
-
-  void logout() {
-    _logged = false;
-    notifyListeners();
-  }
-}
-
-/// Instância global só para o exercício (mantém simples)
-final auth = AuthService();
-
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+class MeuApp extends StatelessWidget {
+  const MeuApp({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return AnimatedBuilder(
-      animation: auth,
-      builder: (_, __) {
-        return MaterialApp(
-          debugShowCheckedModeBanner: false,
-          title: 'Rotas nomeadas (privadas)',
-          // começa no login (pública)
-          initialRoute: '/login',
-          onGenerateRoute: (settings) {
-            // Rotas privadas que exigem login:
-            final isPrivate = settings.name == '/home' || settings.name == '/perfil';
+    return MaterialApp(
+      title: 'Desafio Flutter',
+      theme: ThemeData(
+        primarySwatch: Colors.indigo,
+        visualDensity: VisualDensity.adaptivePlatformDensity,
+      ),
+      debugShowCheckedModeBanner: false,
+      home: const TelaPrincipal(),
+    );
+  }
+}
 
-            if (isPrivate && !auth.logged) {
-              // bloqueia e envia ao login
-              return MaterialPageRoute(
-                builder: (_) => const LoginPage(),
-                settings: const RouteSettings(name: '/login'),
-              );
-            }
+class TelaPrincipal extends StatefulWidget {
+  const TelaPrincipal({super.key});
 
-            switch (settings.name) {
-              case '/login':
-                return MaterialPageRoute(
-                  builder: (_) => const LoginPage(),
-                  settings: settings,
-                );
-              case '/home':
-                return MaterialPageRoute(
-                  builder: (_) => const HomePage(),
-                  settings: settings,
-                );
-              case '/perfil':
-                // Espera um Map como argumento
-                final args = settings.arguments;
-                if (args is! Map<String, String>) {
-                  // defesa simples para evitar crash se vier errado
-                  return MaterialPageRoute(
-                    builder: (_) => const Scaffold(
-                      body: Center(child: Text('Parâmetros inválidos para /perfil')),
-                    ),
-                  );
-                }
-                return MaterialPageRoute(
-                  builder: (_) => PerfilPage(dados: args),
-                  settings: settings,
-                );
-            }
+  @override
+  State<TelaPrincipal> createState() => _TelaPrincipalState();
+}
 
-            // rota desconhecida
-            return MaterialPageRoute(
-              builder: (_) => const Scaffold(
-                body: Center(child: Text('Rota não encontrada')),
-              ),
-            );
-          },
-        );
-      },
+class _TelaPrincipalState extends State<TelaPrincipal> {
+  int _indiceSelecionado = 0;
+
+  // Lista de telas que serão exibidas
+  static const List<Widget> _telas = <Widget>[
+    Modulo1Tela(),
+    Modulo2Tela(), // A tela que terá a TabBar aninhada
+    Modulo3Tela(),
+  ];
+
+  void _aoTocarNoItem(int index) {
+    setState(() {
+      _indiceSelecionado = index;
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text('App NavigationBar')),
+      body: Center(child: _telas.elementAt(_indiceSelecionado)),
+      bottomNavigationBar: BottomNavigationBar(
+        items: const <BottomNavigationBarItem>[
+          BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Módulo 1'),
+          BottomNavigationBarItem(icon: Icon(Icons.explore), label: 'Módulo 2'),
+          BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Módulo 3'),
+        ],
+        currentIndex: _indiceSelecionado,
+        selectedItemColor: Colors.indigo,
+        onTap: _aoTocarNoItem,
+      ),
     );
   }
 }
